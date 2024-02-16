@@ -4,8 +4,17 @@
             <v-col>
                 <h1 class="mb-1">SpaceX Launches</h1>
             </v-col>
-            <v-col cols="2" class="d-flex justify-space-between">
+            <v-col cols="2" class="d-flex">
                 <v-select class="w-25" v-model="selectedYear" :items="allYears" label="Filter by Year" @change="filterLaunchesByYear" />
+            </v-col>
+            <v-col cols="4" class="d-flex">
+                <!-- Dropdown menu for selecting sorting type -->
+                <v-select v-model="sortType" :items="sortTypes" item-title="name" item-value="value" label="Sort By" @change="sortLaunches" />
+                <!-- Buttons for selecting sorting order -->
+                <v-btn-toggle v-model="sortOrder">
+                    <v-btn value="asc">Asc</v-btn>
+                    <v-btn value="desc">Desc</v-btn>
+                </v-btn-toggle>
             </v-col>
         </v-row>
         <div v-if="loading"><h3>Loading..</h3></div>
@@ -35,7 +44,18 @@
     let currentPage = ref(1);
     const itemsPerPage = 5; // Number of launches per page
     let selectedYear = ref('');
-      
+    let sortType = ref('mission_name'); // Default sorting type is by mission name
+    let sortOrder = ref('asc'); // Default sorting order is ascending
+    const sortTypes = ref([
+        {
+            name: 'Mission name',
+            value: 'mission_name',
+        },
+        {
+            name: 'Date',
+            value: 'launch_date_utc',
+        }
+    ])
     const query = gql`
         query {
                 launches {
@@ -103,8 +123,19 @@
         }
     }
 
-    watch(selectedYear, filterLaunchesByYear);
+    // Function to sort launches
+    const sortLaunches = () => {
+        console.log('sort type', sortType.value)
+        if (sortType.value === 'mission_name') {
+            sortLaunchesByMissionName();
+        } else if (sortType.value === 'launch_date_utc') {
+            sortLaunchesByDate();
+        }
+    }
 
+    watch(selectedYear, filterLaunchesByYear);
+    // Watcher for changes in sorting order
+    watch(sortOrder, sortLaunches);
     // Fetch available years
     const allYears = computed(() => {
     const years = new Set();
@@ -114,6 +145,36 @@
         });
         return Array.from(years);
     });
+
+    // Function to sort launches by mission name
+    const sortLaunchesByMissionName = () => {
+        console.log('Sorting launches by mission name');
+        const sortedLaunches = [...launches.value]; // Create a copy of the original launches array
+        sortedLaunches.sort((a, b) => {
+            if (sortOrder.value === 'asc') {
+                return a.mission_name.localeCompare(b.mission_name);
+            } else {
+                return b.mission_name.localeCompare(a.mission_name);
+            }
+        });
+        launches.value = sortedLaunches; // Assign the sorted copy back to launches.value
+    }
+
+    // Function to sort launches by launch date
+    const sortLaunchesByDate = () => {
+        console.log('Sorting launches by date');
+        const sortedLaunches = [...launches.value]; // Create a copy of the original launches array
+        sortedLaunches.sort((a, b) => {
+            const dateA = new Date(a.launch_date_utc);
+            const dateB = new Date(b.launch_date_utc);
+            if (sortOrder.value === 'asc') {
+                return dateA - dateB;
+            } else {
+                return dateB - dateA;
+            }
+        });
+        launches.value = sortedLaunches; // Assign the sorted copy back to launches.value
+    }
 
 
     fetchData(); // Fetch data when component is loaded
