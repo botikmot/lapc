@@ -6,6 +6,9 @@
 		</h2>
 		<h5>Nuxt 3 / Vuetify / Graphql / Pinia</h5>
 		<h3 class="my-5">
+			<nuxt-link to="/SpaceXLaunches" class="button">SpaceX Launches</nuxt-link>
+		</h3>
+		<h3 class="my-5">
 			Example Pinia
 			<v-chip color="blue">useCounter</v-chip>
 		</h3>
@@ -79,7 +82,7 @@
 			<v-chip color="orange">Data from spaceX graphql</v-chip>
 		</h3>
 		<p>There are {{ ships?.length || 0 }} ships.</p>
-		<nuxt-link to="/SpaceXLaunches" class="button">Go to SpaceX Launches</nuxt-link>
+		
 		<v-table>
 			<thead>
 				<tr>

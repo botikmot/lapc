@@ -13,7 +13,7 @@
             </div>
             <div class="d-flex justify-space-between mt-1">
                 <v-btn @click="previousPage" :disabled="currentPage === 1">Previous</v-btn>
-                <div>Page: {{ currentPage }} of {{ numberOfpages }}</div>
+                <div>Page: {{ currentPage }} of {{ numberOfPages }}</div>
                 <v-btn @click="nextPage" :disabled="currentPage * itemsPerPage >= launches.length">Next</v-btn>
             </div>
         </div>
@@ -60,18 +60,15 @@
         return launches.value.slice(startIndex, endIndex);
     });
 
-    const numberOfpages = computed(() => {
-        return launches.value.length / itemsPerPage
-    });
+    const numberOfPages = computed(() => Math.ceil(launches.value.length / itemsPerPage));
 
-    function nextPage() {
+    const nextPage = () => {
         currentPage.value++;
     }
 
-    function previousPage() {
+    const previousPage = () => {
         currentPage.value--;
     }
-
 
     fetchData(); // Fetch data when component is loaded
 </script>
