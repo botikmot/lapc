@@ -1,6 +1,13 @@
 <template>
     <v-container>
-        <h1 class="mb-1">SpaceX Launches</h1>
+        <v-row>
+            <v-col>
+                <h1 class="mb-1">SpaceX Launches</h1>
+            </v-col>
+            <v-col cols="2" class="d-flex justify-space-between">
+                <v-select class="w-25" v-model="selectedYear" :items="allYears" label="Filter by Year" @change="filterLaunchesByYear" />
+            </v-col>
+        </v-row>
         <div v-if="loading"><h3>Loading..</h3></div>
         <div v-else>
             <div v-for="launch in visibleLaunches" :key="launch.id">
@@ -24,9 +31,11 @@
 
     let loading = ref(true)
     let launches = ref([]);
+    let tempLaunches = ref([]);
     let currentPage = ref(1);
     const itemsPerPage = 5; // Number of launches per page
-  
+    let selectedYear = ref('');
+      
     const query = gql`
         query {
                 launches {
@@ -52,12 +61,24 @@
         const { data } = await useAsyncQuery(query);
         loading.value = false;
         launches.value = data.value?.launches;
+        tempLaunches.value = data.value?.launches;
     }
+
+    const filteredLaunches = computed(() => {
+        if (selectedYear.value === '') {
+            return launches.value;
+        } else {
+            return launches.value.filter(launch => {
+                const launchYear = new Date(launch.launch_date_utc).getFullYear().toString();
+                return launchYear === selectedYear.value;
+            });
+        }
+    });
 
     const visibleLaunches = computed(() => {
         const startIndex = (currentPage.value - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        return launches.value.slice(startIndex, endIndex);
+        return filteredLaunches.value.slice(startIndex, endIndex);
     });
 
     const numberOfPages = computed(() => Math.ceil(launches.value.length / itemsPerPage));
@@ -69,6 +90,31 @@
     const previousPage = () => {
         currentPage.value--;
     }
+
+    const filterLaunchesByYear = () => {
+        if (selectedYear.value === '') {
+            fetchData();
+        } else {
+            launches.value = tempLaunches.value.filter(launch => {
+            const launchYear = new Date(launch.launch_date_utc).getFullYear().toString();
+            return launchYear === selectedYear.value;
+            });
+            currentPage.value = 1;
+        }
+    }
+
+    watch(selectedYear, filterLaunchesByYear);
+
+    // Fetch available years
+    const allYears = computed(() => {
+    const years = new Set();
+        tempLaunches.value.forEach(launch => {
+            const year = new Date(launch.launch_date_utc).getFullYear().toString();
+            years.add(year);
+        });
+        return Array.from(years);
+    });
+
 
     fetchData(); // Fetch data when component is loaded
 </script>
